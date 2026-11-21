@@ -107,13 +107,12 @@ No constitutional deviation is proposed; complexity tracking is not applicable.
   approval as an implementation prerequisite. Formal approval of the domain model and those
   prerequisite specifications is required before implementation, as specified by their own
   headers. This plan uses the domain-model text as the requested canonical reference.
-- **G-3 — CRM Core scope conflict**: CRM Core FR-032 says V1 must not generate Note summaries,
-  embeddings, or RAG responses from Notes; this AI spec explicitly adds Notes Summarization and
-  Note-derived RAG. The AI scope is treated as the later, explicitly approved feature-level
-  extension; Note ownership, parentage, revisions, and deletion semantics remain unchanged.
-  Record this scope reconciliation in the approved CRM Core/AI release baseline before
-  implementation. If that extension is not approved, disable Note summarization and Note-derived
-  indexing rather than weakening the CRM Core rule.
+- **G-3 — Note-AI boundary**: Resolved by CRM Core FR-032. V1 may provide only an on-demand,
+  transient Note Summary for an authorized current Note revision. Return summary text only in the
+  request response; retain trace metadata and source Note revision only. Do not index or embed
+  Note content, use Notes as retrieval sources, or use Notes in other V1 AI capabilities. Reject
+  stale/deleted revisions. Any future derived artifact must retain that revision and become stale
+  when it changes or is deleted.
 - **G-4 — Deployment policy**: choose a production secret-store backend, embedding model and
   dimensions, retention policy, and workload/usage quotas before storing tenant credentials,
   indexing production content, or enabling production traffic. These are deployment-policy
@@ -191,8 +190,9 @@ stale/ineligible immediately, independently of asynchronous cleanup.
 
 The embedding adapter and model metadata are replaceable; pin the V1 model/dimension as a
 deployment/migration setting before creating the HNSW/IVFFlat index. Validate RAG quality,
-thresholds, and retrieval latency with tenant-isolated fixtures. Note content enters RAG only
-through an explicit same-tenant, revisioned `KnowledgeDocument` link.
+thresholds, and retrieval latency with tenant-isolated fixtures. Notes are never eligible
+`KnowledgeDocument` sources or retrieval evidence in V1. Note Summary uses only the exact,
+authorized current Note revision and returns transient output with revision attribution.
 
 ### CopilotKit and GenUI
 
@@ -222,9 +222,9 @@ audit/history, unit/integration/RLS tests, Playwright scenario, and docs as appl
 3. **S2 — Lead Summary and Score**: permission-scoped CRM context, attributed sources,
    validated summary/score, CopilotKit/record-level review surfaces, generation trace/usage,
    and no-mutation tests.
-4. **S3 — Notes Summary and Email Draft**: authorized Note revision summaries and attributable
-   references; editable draft for Lead/Contact/Deal; separate explicit approval for persistence
-   and no V1 external send; CRM Core scope reconciliation gate applies.
+4. **S3 — Notes Summary and Email Draft**: transient on-demand summaries of authorized current
+   Note revisions with exact revision attribution and no persistence/indexing; editable draft for
+   Lead/Contact/Deal; separate explicit approval for persistence and no V1 external send.
 5. **S4 — Knowledge registration, ingestion, and Ask CRM**: tenant-owned source lifecycle,
    chunk/embedding revisions, stale invalidation, pgvector RPC, evidence-grounded answers,
    citations, insufficient-evidence behavior, and cross-tenant RAG tests.
@@ -276,9 +276,10 @@ gate availability only and never grant access.
   tenant foreign keys, multi-tenant users, forged/stale tenant context, cross-tenant reads/writes,
   history and audit, and retrieval eligibility. Test signed-in user and tightly scoped system
   ingestion roles separately; prove service-role paths cannot escape the server boundary.
-- **RAG tests**: ready/current/authorized results only; deny pending, failed, stale, deleted,
-  archived, cross-tenant, and unauthorized parent sources; test Note revision invalidation,
-  citation mapping, no-evidence response, bounded result count, and RPC latency.
+- **RAG tests**: ready/current/authorized non-Note results only; deny Note sources as well as
+  pending, failed, stale, deleted, archived, cross-tenant, and unauthorized parent sources.
+  Test transient Note Summary revision attribution and stale/deleted-source rejection, citation
+  mapping, no-evidence response, bounded result count, and RPC latency.
 - **Provider tests**: supported adapters contract-test normalized outputs, streaming, timeout,
   cancellation, malformed/disallowed output, disabled provider, missing credential, usage
   capture, and no silent fallback. Secrets must be absent in captured payloads and logs.
@@ -322,7 +323,7 @@ gate availability only and never grant access.
 | Tenant or permission context omitted in an adapter, cache, or retrieval path | Resolve actor server-side, validate membership per operation, enforce RLS, tenant-aware cache keys, negative two-tenant tests. |
 | Supabase service-role bypasses RLS | Restrict key to server secrets; avoid for ordinary operations; narrowly scoped system functions and explicit tenant/source checks; test separately. |
 | Approval becomes a UI-only confirmation | Domain approval service checks exact proposal/revision and actor, revalidates record/permission, applies once, and writes audit outcome. |
-| CRM Core scope conflict for Note-derived AI | Resolve G-3 before implementation; do not alter Note semantics; gate Note AI/RAG if approval is withheld. |
+| Note content enters V1 retrieval or becomes a durable summary | Enforce FR-032 in source registration, embeddings, retrieval RPC, and capability contracts; only transient on-demand Note Summary is allowed, bound to the exact source revision. |
 | Provider quality, outage, timeout, or malicious output | Normalize failure, schema-validate, make no hidden fallback, show failure/retry/cancel, keep CRM unchanged. |
 | Prompt injection from retrieved content | Mark retrieved text as untrusted evidence, restrict tool authority, limit sources, validate response, and never rely on model refusal for authorization. |
 | Stale or weak RAG evidence | Revision/state invalidation before async work; filter eligibility before vector ranking; cite source revisions; state insufficient evidence; evaluate threshold and latency. |

@@ -91,7 +91,10 @@ Capability-specific output schemas:
 
 - `lead.summary`: concise summary plus citations, no write command.
 - `lead.score`: bounded score/label and validated explanatory factors, no CRM-field mutation.
-- `notes.summarize`: summary and Note revision citations; only accessible non-deleted Notes.
+- `notes.summarize`: transient on-demand summary and exact Note revision citation; only the
+  accessible current revision. Return summary text only in the request response; persist trace
+  metadata and source revision only. Do not retain summary text, index/embed Note content, or use
+  it for retrieval or another V1 AI capability. Reject stale or deleted revisions.
 - `email.generate`: editable draft, recipients/subject/body as proposal content only; no external
   send in V1 and no automatic CRM persistence.
 - `crm.ask`: answer, citations, declared evidence scope, and an insufficient-evidence outcome.

@@ -56,7 +56,8 @@ Configuration categories:
 4. Start Next.js locally and run Playwright journeys for each completed vertical slice.
 5. Verify the negative cases: forged tenant selector, cross-tenant record/reference, disabled
    provider, provider timeout/invalid output, missing evidence, stale/deleted Note revision,
-   rejected/expired approval, audit persistence failure, and duplicate approval.
+   transient Note Summary text absent from persisted AI History/audit/CRM, rejected/expired
+   approval, audit persistence failure, and duplicate approval.
 6. Run browser checks at phone (including 320 CSS px), tablet, and desktop sizes and with both
    light and dark themes. Complete keyboard-only and screen-reader-oriented review of approval
    and citation controls.

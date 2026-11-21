@@ -64,15 +64,15 @@ A sales user opens an authorized Lead and requests a summary or score. The syste
 
 ### User Story 2 - Summarize notes and generate an email (Priority: P1)
 
-A user summarizes authorized Notes or drafts an email for a Lead, Contact, or Deal. AI output is reviewable and is never sent or persisted to CRM as a consequential action without approval.
+A user requests a transient on-demand summary of an authorized Note or drafts an email for a Lead, Contact, or Deal. Note summaries are returned only in the request response; summary text is not retained in AI History, audit, or CRM, and is not indexed, embedded, or used as a retrieval source. Email output is reviewable and is never sent or persisted to CRM as a consequential action without approval.
 
 **Why this priority**: These capabilities reduce repetitive communication and review work.
 
-**Independent Test**: Summarize notes and generate email drafts for a mock Tenant; verify editable output, source scoping, and that sending or saving requires separate approval.
+**Independent Test**: Summarize Notes and generate email drafts for a mock Tenant; verify Note summaries cite the exact source revision and remain transient, source scoping, and that sending or saving email requires separate approval.
 
 **Acceptance Scenarios**:
 
-1. **Given** authorized Notes, **When** the user requests a summary, **Then** the system returns a summary with source references and no mutation.
+1. **Given** an authorized, current Note revision, **When** the user requests a summary, **Then** the system returns an on-demand transient summary citing that revision without retaining summary text in AI History, audit, or CRM, or indexing it; a changed or deleted source revision is rejected as stale.
 2. **Given** a user requests an email draft, **When** the generation completes, **Then** the draft remains unapplied and editable until the user explicitly confirms save or send intent.
 3. **Given** a send or consequential save action, **When** the user has not approved it, **Then** no external message is sent and no CRM record changes.
 
@@ -120,7 +120,7 @@ A tenant administrator enables supported providers and manages versioned prompt 
 
 ### User Story 6 - Register tenant knowledge for RAG (Priority: P2)
 
-A tenant administrator registers sources or explicitly links approved Notes into a revisioned knowledge index. Retrieval excludes stale, deleted, failed, or cross-Tenant content.
+A tenant administrator registers eligible non-Note sources into a revisioned knowledge index. Notes are not indexable or retrievable by Ask CRM in V1. Retrieval excludes stale, deleted, failed, or cross-Tenant content.
 
 **Why this priority**: RAG is the foundation for Ask CRM and future knowledge features.
 
@@ -154,7 +154,7 @@ A tenant administrator registers sources or explicitly links approved Notes into
 - **FR-005**: Generated summaries and answers MUST include attributable source references to the same-Tenant CRM records or knowledge revisions used.
 - **FR-006**: Lead Summary MUST summarize only Lead content and directly related permitted CRM subjects allowed by the capability contract.
 - **FR-007**: Lead Scoring MUST produce an explainable score and factors but MUST NOT silently change Lead fields.
-- **FR-008**: Notes Summarization MUST summarize only authorized Notes and MUST NOT expose deleted, stale, or out-of-scope Notes.
+- **FR-008**: Notes Summarization MUST be an on-demand transient capability that uses only an authorized, current Note revision, cites that exact revision, and MUST NOT expose deleted, stale, or out-of-scope Notes. Summary text MUST be returned only in the request response and MUST NOT be retained in AI History, audit, or CRM, indexed, embedded, or used as a retrieval source. The generation trace MAY retain outcome metadata and the source Note identity/revision. Note content MUST NOT be used by other V1 AI capabilities.
 - **FR-009**: Email Generation MUST produce a reviewable draft and MUST require separate explicit user confirmation before CRM persistence or external sending.
 - **FR-010**: Ask CRM MUST perform tenant- and permission-scoped retrieval, reject unsupported questions, and report insufficient evidence instead of fabrication.
 - **FR-011**: The system MUST preserve AI History as append-only operational history; corrections and voiding MUST use compensating records.
@@ -165,7 +165,7 @@ A tenant administrator registers sources or explicitly links approved Notes into
 - **FR-016**: Provider selection and model aliases MUST be tenant-owned configuration and MUST not alter domain rules.
 - **FR-017**: Retrieval MUST include only ready embeddings for active, authorized, non-deleted document and chunk revisions in the requesting Tenant.
 - **FR-018**: Knowledge source edits, archive, deletion, or invalidation MUST mark prior retrieval artifacts stale and exclude them immediately.
-- **FR-019**: Note-derived RAG content MUST exist only through a same-Tenant, revisioned `KnowledgeDocument`; Note edits or deletion invalidate the prior revision.
+- **FR-019**: V1 MUST NOT generate embeddings or RAG responses from Notes. V1 MAY generate transient on-demand Note Summaries that are not indexed, embedded, or used as retrieval sources. Future-derived artifacts MUST reference the source Note revision and become stale when that revision changes or is deleted.
 - **FR-020**: All generation, review, application, provider configuration, template publication, and knowledge lifecycle decisions MUST emit attributable audit events.
 - **FR-021**: Usage quantities, provider identity, model, latency, and cost when available MUST be recordable through canonical `AIUsageRecord` entries.
 - **FR-022**: Usage corrections MUST be compensating and auditably attributable.

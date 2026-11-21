@@ -350,9 +350,10 @@ views; verify denial and audit of critical same-tenant changes.
   permissions; deleted Notes are excluded from ordinary search and views.
 - **FR-031**: A Note MUST be searchable within its tenant and permissions. Search MUST NOT expose
   Note content to users without access to its parent.
-- **FR-032**: V1 MUST NOT generate AI summaries, embeddings, or RAG responses from Notes.
-  Future-derived artifacts MUST reference the source Note revision and become stale when that
-  revision changes or is deleted.
+- **FR-032**: V1 MUST NOT generate embeddings or RAG responses from Notes.
+  V1 MAY generate transient on-demand Note Summaries that are not indexed, embedded, or used as
+  retrieval sources. Future-derived artifacts MUST reference the source Note revision and become
+  stale when that revision changes or is deleted.
 
 #### Search, Filtering, and Sorting
 

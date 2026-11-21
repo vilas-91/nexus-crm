@@ -10,10 +10,11 @@ schema/policies, domain behavior, adapter/UI, and verification.
   the product approval decision; approve the canonical domain model and prerequisite Foundation
   Platform/CRM Core specifications as required by their headers. **Blocks implementation**
   (G-1, G-2).
-- [ ] **T002 — Reconcile Note-AI scope**: Record the approved AI feature scope extension against
-  CRM Core FR-032; if not approved, explicitly disable Notes Summarization and Note-derived
-  indexing. Preserve Note parentage, authorship, revision, and deletion rules. **Depends on
-  T001** (G-3).
+- [ ] **T002 — Enforce the Note-AI boundary**: Implement only transient on-demand Note Summary
+  for authorized current revisions; prohibit summary persistence, Note registration/indexing/
+  embeddings, Note retrieval, and Note use by other V1 AI capabilities. Cite the source revision
+  and reject stale/deleted revisions. Ensure future derived artifacts bind to that revision and
+  become stale on change/deletion. **Depends on T001** (FR-008, FR-019).
 - [ ] **T003 — Approve deployment policy inputs**: Select a secret-store backend, V1 embedding
   model/revision/dimension, prompt/output retention policy, AI workload profile/quotas, and
   ingestion execution facility. Document rotation, reindex, retention, and rollback behavior.
@@ -110,9 +111,10 @@ schema/policies, domain behavior, adapter/UI, and verification.
 
 ## Phase 5 — Notes Summary and Email Draft (S3)
 
-- [ ] **T050 — Implement authorized Note summarization**: Load only accessible non-deleted Note
-  revisions and required parent context; validate source citations and trace; reject stale
-  revisions. **Depends on T002, T030** (FR-008).
+- [ ] **T050 — Implement transient Note summarization**: Load only the accessible current Note
+  revision; return summary text only in the request response and persist trace metadata/source
+  revision only; do not use Note content in another capability. Return the exact Note revision
+  citation and reject stale/deleted revisions. **Depends on T002, T030** (FR-008).
 - [ ] **T051 — Implement email draft generation**: Support Lead/Contact/Deal context under
   subject permissions; return editable draft, keep draft unapplied, and omit external delivery.
   **Depends on T030** (FR-009).
@@ -123,22 +125,24 @@ schema/policies, domain behavior, adapter/UI, and verification.
   label draft vs saved state, provide explicit separate confirmation, accessible progress/errors,
   and mobile/light/dark layouts. **Depends on T050–T052**.
 - [ ] **T054 — Verify Notes/email slice**: Test Note permission/revision/deletion, draft
-  editability, no save/send before approval, approved save once, rejection/expiry, audit, and
-  keyboard/mobile browser journeys. **Depends on T053** (US2, AC-003–005, AC-009).
+  editability, transient summary text absent from AI History/audit/CRM after response, no
+  Note-indexing/embedding, no save/send before approval, approved save once, rejection/expiry,
+  audit, and keyboard/mobile browser journeys. **Depends on T053** (US2, AC-003–005, AC-009).
 
 ## Phase 6 — Knowledge lifecycle, RAG, and Ask CRM (S4)
 
-- [ ] **T060 — Implement knowledge registration/lifecycle**: Register authorized source
+- [ ] **T060 — Implement knowledge registration/lifecycle**: Register authorized non-Note source
   references, create `KnowledgeDocument` revisions, process status transitions, audit, and make
-  archive/edit/delete immediately ineligible. Note sources require explicit same-tenant links.
+  archive/edit/delete immediately ineligible. Reject Note sources for V1 registration.
   **Depends on T003, T006, T007, T011** (FR-018–019).
-- [ ] **T061 — Implement chunking and embedding pipeline**: Chunk by revision, call configured
-  embedding port, record model revision/dimension/status, and write idempotently; keep
-  failed/pending/stale content unavailable. **Depends on T012, T060** (FR-017–019).
+- [ ] **T061 — Implement chunking and embedding pipeline**: Chunk eligible non-Note sources by
+  revision, call configured embedding port, record model revision/dimension/status, and write
+  idempotently; keep failed/pending/stale content unavailable. **Depends on T012, T060**
+  (FR-017–019).
 - [ ] **T062 — Implement pgvector retrieval RPC**: Add bounded SQL similarity function applying
-  tenant, permission/source eligibility, active document/chunk revision, ready embedding, and
-  deletion predicates before rank/limit. Test RLS and direct RPC access. **Depends on T006,
-  T061** (FR-010, FR-017–019).
+  tenant, permission/source eligibility, non-Note source type, active document/chunk revision,
+  ready embedding, and deletion predicates before rank/limit. Test RLS and direct RPC access.
+  **Depends on T006, T061** (FR-010, FR-017–019).
 - [ ] **T063 — Implement Ask CRM service**: Combine CRM Core permission-scoped search and
   authorized RAG; return citations/source scope; validate evidence-grounded answers and return
   insufficient evidence when no eligible source exists. **Depends on T040, T062, T030**
@@ -147,7 +151,7 @@ schema/policies, domain behavior, adapter/UI, and verification.
   question entry, source citations, scope and insufficiency display, streaming/progress/cancel,
   and clear failure states. **Depends on T060–T063** (FR-024, FR-027–028).
 - [ ] **T065 — Verify RAG/Ask CRM isolation and quality**: Test multiple tenants, users with
-  distinct permissions, Note revision invalidation, archived/deleted/pending/failed sources,
+  distinct permissions, rejection of Note sources, archived/deleted/pending/failed sources,
   prompt injection fixture, unsupported question, citations, no evidence, bounded results, and
   retrieval p95. **Depends on T064** (US3, US6, AC-002, AC-006–008).
 
